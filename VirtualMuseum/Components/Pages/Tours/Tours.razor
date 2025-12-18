@@ -1,0 +1,46 @@
+﻿@page "/tours"
+@using Microsoft.AspNetCore.Components.Authorization
+@inject VirtualMuseum.Services.TourService TourService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Туры</PageTitle>
+
+<h1>Туры</h1>
+
+<AuthorizeView>
+    <Authorized>
+        <button class="btn btn-primary" @onclick="CreateTour">Добавить тур</button>
+    </Authorized>
+</AuthorizeView>
+<ul>
+    @foreach(var tour in tours)
+    {
+        <li>
+            <a href="/tours/@tour.Id">@tour.Name</a>
+            @tour.Name (@tour.Date.ToShortDateString())        
+        </li>
+    }
+</ul>
+
+@code {
+    private List<VirtualMuseum.Models.Tour> tours = new();
+
+    protected override void OnInitialized()
+    {
+        tours = TourService.GetTours();
+    }
+    void CreateTour()
+    {
+        Navigation.NavigateTo("/tours/create");
+        /*
+         TourService.AddTour(new VirtualMuseum.Models.Tour
+            {
+                Id = tours.Count,
+                Name = "Виртуальный тур",
+                Date = DateTime.Now
+            });
+            */
+        
+    }
+}

@@ -1,0 +1,48 @@
+﻿@page "/tours/create"
+@using Microsoft.AspNetCore.Components.Authorization
+@using VirtualMuseum.Services
+@inject AuthenticationStateProvider AuthStateProvider
+@inject FeedbackService FeedbackService
+@inject TourService TourService
+@inject NavigationManager Navigation
+
+@rendermode InteractiveServer
+<PageTitle>Создание тура</PageTitle>
+
+<h1>Создание тура</h1>
+
+<AuthorizeView>
+    <Authorized>
+        <button class="btn btn-primary" @onclick="CreateTour">Добавить тур</button>
+    </Authorized>
+</AuthorizeView>
+
+
+@code {
+    private List<VirtualMuseum.Models.Tour> tours = new();
+
+    protected override void OnInitialized()
+    {
+        tours = TourService.GetTours();
+    }
+    async Task CreateTour()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (!user.Identity!.IsAuthenticated)
+            return;
+
+        var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value;
+
+
+        TourService.AddTour(new VirtualMuseum.Models.Tour
+        {
+            Id = tours.Count,
+            Name = "Виртуальный тур",
+            OwnerId = userId,
+            Date = DateTime.Now
+        });
+        Navigation.NavigateTo("/tours");
+    }
+}

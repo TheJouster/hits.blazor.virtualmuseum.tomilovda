@@ -1,0 +1,134 @@
+﻿@page "/tours/{TourId:int}"
+@using Microsoft.AspNetCore.Components.Authorization
+@using VirtualMuseum.Services
+@using VirtualMuseum.Models
+@inject AuthenticationStateProvider AuthStateProvider
+@inject FeedbackService FeedbackService
+@inject TourService TourService
+@rendermode InteractiveServer
+
+<h3>@tour?.Name</h3>
+<div class="d-flex justify-content-between align-items-center">
+    <div class="mb-3">
+        <p>Дата: @tour?.Date.ToShortDateString()</p>
+    </div>
+    <div class="mb-3">
+        @if (isOwner)
+        {
+            <a class="btn btn-warning" href="/tours/edit/@tour!.Id">
+                Изменить тур
+            </a>
+        }
+    </div>
+</div>
+
+<hr />
+
+<h4>Отзывы</h4>
+
+@foreach (var fb in feedbacks)
+{
+    <div class="border p-2 mb-2">
+        <b>@fb.UserName </b>
+        @for (int i = 1; i <= fb.Rating; i++)
+        {
+            <span class="text-warning">★</span>
+        }
+        <br/>
+        @fb.Message
+    </div>
+}
+
+<hr />
+
+<AuthorizeView>
+    <Authorized>
+        <h5>Оставить отзыв</h5>
+        <div class="mb-3">
+            <textarea class="form-control" @bind="message"></textarea><br />
+            <label class="form-label">Оценка:</label>
+            <div class="star-rating">
+                @for (int i = 5; i >= 1; i--)
+                {
+                    int stars = i;
+                    <input type="radio"
+                           name="rating"
+                           id="@($"star-{i}")"
+                           checked="@(ratingStars == i)"
+                           @onchange="() => ratingStars = stars" />
+
+                    <label for="@($"star-{i}")">★</label>
+                }
+            </div>
+            <button class="btn btn-primary" @onclick="Send">Отправить отзыв</button>
+        </div>
+        
+    </Authorized>
+    <NotAuthorized>
+        <p class="text-muted">
+            Чтобы оставить отзыв, необходимо
+            <a href="Identity/Account/Register">зарегистрироваться</a>
+            или
+            <a href="Identity/Account/Login">войти</a>.
+        </p>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    [Parameter]
+    public int TourId {get; set;}
+
+    VirtualMuseum.Models.Tour? tour;
+    bool isOwner = false;
+
+    List<VirtualMuseum.Models.Feedback> feedbacks = new();
+
+    string message = string.Empty;
+    public int ratingStars = 5;
+
+    protected override async Task OnInitializedAsync()
+    {
+        tour = TourService.GetTours().FirstOrDefault(t => t.Id == TourId);
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity!.IsAuthenticated && tour != null)
+        {
+            var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            isOwner = tour.OwnerId == userId;
+        }
+
+        feedbacks = FeedbackService.GetByTour(TourId);
+    }
+
+    
+
+    void SetRating(int value)
+    {
+        ratingStars = value;
+        Console.WriteLine($"Setting rating. ratingStars = {ratingStars}");
+    }
+
+    async Task Send()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (!user.Identity!.IsAuthenticated)
+            return;
+
+        FeedbackService.AddFeedback(new VirtualMuseum.Models.Feedback
+            {
+                TourId = TourId,
+                Message = message,
+                Rating = ratingStars,
+                UserName = user.Identity.Name!
+            });
+
+        feedbacks = FeedbackService.GetByTour(TourId);
+        message = string.Empty;
+        ratingStars = 5;
+        Console.WriteLine($"Sending feedback. ratingStars = {ratingStars}");
+    }
+}

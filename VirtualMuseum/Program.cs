@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using VirtualMuseum.Components;
 using VirtualMuseum.Components.Account;
 using VirtualMuseum.Data;
+using VirtualMuseum.Services;
 
 namespace VirtualMuseum
 {
@@ -41,6 +42,9 @@ namespace VirtualMuseum
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddSignInManager()
                 .AddDefaultTokenProviders();
+
+            builder.Services.AddSingleton<TourService>();
+            builder.Services.AddSingleton<FeedbackService>();
 
             builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
