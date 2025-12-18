@@ -13,15 +13,21 @@
         <button class="btn btn-primary" @onclick="CreateTour">Добавить тур</button>
     </Authorized>
 </AuthorizeView>
-<ul>
-    @foreach(var tour in tours)
-    {
-        <li>
-            <a href="/tours/@tour.Id">@tour.Name</a>
-            @tour.Name (@tour.Date.ToShortDateString())        
-        </li>
-    }
-</ul>
+<div class="mb-3">
+    <div class="row m-3">
+        @foreach(var tour in tours)
+        {
+            <div class="card m-3" style="width: 18rem; height: 400px;">
+                <img src="@tour.Exhibits[0]?.Images[0]?.ImageUrl" class="card-img-top" style="height: 200px;" alt="...">
+                <div class="card-body">
+                    <h5 class="card-title">@tour.Name</h5>
+                    <p class="card-text">(@tour.Date.ToShortDateString()) <br />@tour.Description</p>
+                    <a href="/tours/@tour.Id" class="btn btn-primary">Просмотреть</a>
+                </div>
+            </div>
+        }
+    </div>
+</div>
 
 @code {
     private List<VirtualMuseum.Models.Tour> tours = new();
@@ -32,15 +38,6 @@
     }
     void CreateTour()
     {
-        Navigation.NavigateTo("/tours/create");
-        /*
-         TourService.AddTour(new VirtualMuseum.Models.Tour
-            {
-                Id = tours.Count,
-                Name = "Виртуальный тур",
-                Date = DateTime.Now
-            });
-            */
-        
+        Navigation.NavigateTo("/tours/create");   
     }
 }

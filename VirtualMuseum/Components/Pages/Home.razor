@@ -1,7 +1,10 @@
 ﻿@page "/"
+@inject NavigationManager NavigationManager
+<h3>Home</h3>
 
-<PageTitle>Экспонаты</PageTitle>
-
-<h1>Hello, world!</h1>
-
-Welcome to your new app.
+@code {
+    protected override void OnInitialized()
+    {
+        NavigationManager.NavigateTo("/exhibits");
+    }
+}

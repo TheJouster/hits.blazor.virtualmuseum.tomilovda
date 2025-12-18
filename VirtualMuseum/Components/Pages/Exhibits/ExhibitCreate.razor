@@ -1,0 +1,122 @@
+﻿@page "/exhibits/create"
+@using Microsoft.AspNetCore.Components.Authorization
+@using VirtualMuseum.Services
+@using VirtualMuseum.Models
+@inject AuthenticationStateProvider AuthStateProvider
+@inject FeedbackService FeedbackService
+@inject ExhibitService ExhibitService
+@inject NavigationManager Navigation
+@inject IWebHostEnvironment Env
+
+@rendermode InteractiveServer
+<PageTitle>Добавление экспоната</PageTitle>
+
+<h1>Добавление экспоната</h1>
+
+<AuthorizeView>
+    <Authorized>
+        <div class="mb-3">
+            <label for="exhibitNameForm"  class="form-label">Название экспоната</label>
+            <input type="text" @bind="exhibitName" class="form-control" id="exhibitNameForm" placeholder="Введите название экспоната">
+        </div>
+        <div class="mb-3">
+            <label for="exhibitDescForm" class="form-label">Описание экспоната</label>
+            <textarea class="form-control" @bind="exhibitDesc" id="exhibitDescForm" rows="2"></textarea>
+        </div>
+        <div class="mb-3">
+        <InputFile class="form-control" type="file" OnChange="UploadImages" multiple @key="inputFileKey" accept="image/*" />
+        
+            <button class="btn btn-primary mt-3" @onclick="CreateExhibit">Добавить экспонат</button>
+        </div>
+    </Authorized>
+</AuthorizeView>
+
+
+@code {
+    List<Exhibit> allExhibits = new();
+    Exhibit? exhibit = new Exhibit();
+
+    string exhibitName = string.Empty;
+    string exhibitDesc = string.Empty;
+
+    int inputFileKey = 0;
+
+    protected override async Task OnInitializedAsync()
+    {   
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (!user.Identity!.IsAuthenticated)
+            return;
+
+
+        allExhibits = ExhibitService.GetAll();
+        exhibit = new VirtualMuseum.Models.Exhibit
+        {
+            Id = allExhibits.Count,
+            Title = exhibitName,
+            Description = exhibitDesc,
+        };
+    }
+
+
+
+    async Task CreateExhibit()
+    {
+        Console.WriteLine(exhibitName);
+        Console.WriteLine(exhibitDesc);
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (!user.Identity!.IsAuthenticated)
+            return;
+
+        exhibit.Title = exhibitName;
+        exhibit.Description = exhibitDesc;
+
+        ExhibitService.AddExhibit(exhibit);
+        ResetFileInput();
+        Navigation.NavigateTo("/exhibits");
+    }
+
+    void ResetFileInput()
+    {
+        inputFileKey++;
+    }
+
+    async Task UploadImages(InputFileChangeEventArgs e)
+    {
+        var exhibitFolder = Path.Combine(Env.WebRootPath, "images", "exhibits", exhibit.Id.ToString());
+        Directory.CreateDirectory(exhibitFolder);
+
+        foreach (var file in e.GetMultipleFiles())
+        {
+            try
+            {
+                if (file.Size > 100_000_000)
+                {
+                    continue;
+                }
+                var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.Name)}";
+                var path = Path.Combine(exhibitFolder, fileName);
+
+                await using var fs = new FileStream(path, FileMode.Create);
+                await file.OpenReadStream(maxAllowedSize: 100_000_000).CopyToAsync(fs);
+
+                exhibit.Images.Add(new ExhibitImage
+                    {
+                        Id = exhibit.Images.Count,
+                        ExhibitId = exhibit.Id,
+                        ImageUrl = $"/images/exhibits/{exhibit.Id}/{fileName}"
+                    });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка загрузки {file.Name}: {ex.Message}");
+            }
+        }
+        
+    }
+
+    
+}

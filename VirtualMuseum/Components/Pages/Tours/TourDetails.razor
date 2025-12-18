@@ -5,13 +5,81 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject FeedbackService FeedbackService
 @inject TourService TourService
+@inject IJSRuntime JS
 @rendermode InteractiveServer
 
-<h3>@tour?.Name</h3>
-<div class="d-flex justify-content-between align-items-center">
+
+<div class="container-fluid d-flex justify-content-center align-items-center flex-column">
+    <h3>@tour?.Name</h3>
     <div class="mb-3">
-        <p>Дата: @tour?.Date.ToShortDateString()</p>
+        <p class="d-flex justify-content-center align-content-center">Дата: @tour?.Date.ToShortDateString()</p>
+        
+        @if (tour.Exhibits.Any())
+        {
+            <div id="tourCarousel" class="carousel slide mb-4 bg-dark" data-bs-ride="carousel" data-bs-interval="2000">
+
+                <div class="carousel-indicators">
+                    @{
+                        int slide = 0;
+                        bool isFirstB = true;
+                    }
+                    @foreach (var exhibit in tour.Exhibits)
+                    {
+                        foreach (var image in exhibit.Images)
+                        {
+                            <button type="button" data-bs-target="#tourCarousel" data-bs-slide-to="@slide" class="@(isFirstB ? "active" : "")" aria-current="true" aria-label="Slide @slide"></button>
+                            slide += 1;
+                            isFirstB = false;
+                        }
+                    }
+                </div>
+
+                <div class="carousel-inner" style="width:900px; height:600px !important; align-content:center; align-items:center;">
+                    @{
+                        bool isFirst = true;
+                    }
+
+
+                    @foreach (var exhibit in tour.Exhibits)
+                    {
+                        foreach (var image in exhibit.Images)
+                        {
+                            <div class="carousel-item @(isFirst ? "active" : "")">
+                                <img src="@image.ImageUrl"
+                                        class="d-block w-100 rounded"
+                                     style=" max-height:600px; object-fit: contain;"
+                                        alt="@exhibit.Title" />
+
+                                <div class="carousel-caption d-none d-md-block">
+                                    <h5>@exhibit.Title</h5>
+                                    <p>@exhibit.Description</p>
+                                </div>
+                            </div>
+
+                            isFirst = false;
+                        }
+                    }
+                </div>
+
+                <button class="carousel-control-prev" type="button"
+                        data-bs-target="#tourCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon"></span>
+                </button>
+
+                <button class="carousel-control-next" type="button"
+                        data-bs-target="#tourCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon"></span>
+                </button>
+            </div>
+        }
+        else
+        {
+            <p class="text-muted">В туре пока нет экспонатов</p>
+        }
+        
+        
     </div>
+    <p class="d-flex justify-content-center align-content-center mb-3">@tour?.Description</p>
     <div class="mb-3">
         @if (isOwner)
         {
@@ -20,6 +88,8 @@
             </a>
         }
     </div>
+
+    
 </div>
 
 <hr />
@@ -67,9 +137,9 @@
     <NotAuthorized>
         <p class="text-muted">
             Чтобы оставить отзыв, необходимо
-            <a href="Identity/Account/Register">зарегистрироваться</a>
+            <a href="/Account/Register">зарегистрироваться</a>
             или
-            <a href="Identity/Account/Login">войти</a>.
+            <a href="/Account/Login">войти</a>.
         </p>
     </NotAuthorized>
 </AuthorizeView>
@@ -131,4 +201,13 @@
         ratingStars = 5;
         Console.WriteLine($"Sending feedback. ratingStars = {ratingStars}");
     }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && tour?.Exhibits.Any() == true)
+        {
+            await JS.InvokeVoidAsync("initCarousel", "tourCarousel");
+        }
+    }
+
 }

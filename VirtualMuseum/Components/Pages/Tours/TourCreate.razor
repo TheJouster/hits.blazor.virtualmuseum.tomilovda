@@ -1,9 +1,11 @@
 ﻿@page "/tours/create"
 @using Microsoft.AspNetCore.Components.Authorization
 @using VirtualMuseum.Services
+@using VirtualMuseum.Models
 @inject AuthenticationStateProvider AuthStateProvider
 @inject FeedbackService FeedbackService
 @inject TourService TourService
+@inject ExhibitService ExhibitService
 @inject NavigationManager Navigation
 
 @rendermode InteractiveServer
@@ -13,6 +15,29 @@
 
 <AuthorizeView>
     <Authorized>
+        <div class="mb-3">
+            <label for="tourNameForm"  class="form-label">Название тура</label>
+            <input type="text" @bind="tourName" class="form-control" id="tourNameForm" placeholder="Введите название тура">
+        </div>
+        <div class="mb-3">
+            <label for="tourDescForm"  class="form-label">Описание тура</label>
+            <textarea class="form-control" @bind="tourDesc" id="tourDescForm" rows="2"></textarea>
+        </div>
+        <h5>Экспонаты в туре</h5>
+
+        @foreach (var exhibit in allExhibits)
+        {
+            <div class="form-check">
+                <input type="checkbox"
+                       class="form-check-input"
+                       checked="@tour.Exhibits.Any(e => e.Id == exhibit.Id)"
+                       @onchange="() => ToggleExhibit(exhibit)" />
+
+                <label class="form-check-label">
+                    @exhibit.Title
+                </label>
+            </div>
+        }
         <button class="btn btn-primary" @onclick="CreateTour">Добавить тур</button>
     </Authorized>
 </AuthorizeView>
@@ -21,10 +46,43 @@
 @code {
     private List<VirtualMuseum.Models.Tour> tours = new();
 
-    protected override void OnInitialized()
-    {
+    string tourName = "";
+    string tourDesc = "";
+
+    Tour? tour = new Tour();
+    List<Exhibit> allExhibits = new();
+
+    protected override async Task OnInitializedAsync()
+    {   
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (!user.Identity!.IsAuthenticated)
+            return;
+
+        var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value;
+        tour = new VirtualMuseum.Models.Tour
+        {
+            Id = tours.Count,
+            Name = tourName,
+            OwnerId = userId,
+            Date = DateTime.Now,
+            Description = tourDesc
+        };
+        allExhibits = ExhibitService.GetAll();
         tours = TourService.GetTours();
+
     }
+
+    void ToggleExhibit(Exhibit exhibit)
+    {
+        if (tour.Exhibits.Any(e => e.Id == exhibit.Id))
+            tour.Exhibits.RemoveAll(e => e.Id == exhibit.Id);
+        else
+            tour.Exhibits.Add(exhibit);
+
+    }
+
     async Task CreateTour()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
@@ -35,14 +93,10 @@
 
         var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value;
 
+        tour.Name = tourName;
+        tour.Description = tourDesc;
 
-        TourService.AddTour(new VirtualMuseum.Models.Tour
-        {
-            Id = tours.Count,
-            Name = "Виртуальный тур",
-            OwnerId = userId,
-            Date = DateTime.Now
-        });
+        TourService.AddTour(tour);
         Navigation.NavigateTo("/tours");
     }
 }

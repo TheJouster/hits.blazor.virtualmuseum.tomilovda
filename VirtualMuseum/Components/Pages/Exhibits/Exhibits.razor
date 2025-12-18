@@ -1,0 +1,30 @@
+﻿@page "/exhibits"
+@using Microsoft.AspNetCore.Components.Authorization
+@inject VirtualMuseum.Services.ExhibitService ExhibitService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Экспонаты</PageTitle>
+
+<h1>Экспонаты</h1>
+<AuthorizeView>
+    <Authorized>
+        <button class="btn btn-primary" @onclick="CreateExhibit">Добавить экспонат</button>
+    </Authorized>
+</AuthorizeView>
+
+
+
+
+@code {
+    private List<VirtualMuseum.Models.Exhibit> exhibits = new();
+
+    protected override void OnInitialized()
+    {
+        exhibits = ExhibitService.GetAll();
+    }
+    void CreateExhibit()
+    {
+        Navigation.NavigateTo("/exhibits/create");
+    }
+}

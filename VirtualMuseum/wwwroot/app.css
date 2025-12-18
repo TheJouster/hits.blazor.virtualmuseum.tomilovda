@@ -80,3 +80,16 @@ h1:focus {
 .star-rating input:checked ~ label {
     color: #ffc107; /* Bootstrap warning */
 }
+
+.carousel-inner > .carousel-item > img, .carousel-inner > .carousel-item > a > img {
+    margin: auto;
+    align-content: center;
+    align-items: center;
+}
+#tourCarousel {
+    height: auto;
+    width: auto;
+    overflow: hidden;
+    align-content: center;
+    align-items: center;
+}

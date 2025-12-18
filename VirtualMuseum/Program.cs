@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using VirtualMuseum.Components;
@@ -45,6 +46,12 @@ namespace VirtualMuseum
 
             builder.Services.AddSingleton<TourService>();
             builder.Services.AddSingleton<FeedbackService>();
+            builder.Services.AddSingleton<ExhibitService>();
+
+            builder.Services.Configure<FormOptions>(options =>
+            {
+                options.MultipartBodyLengthLimit = 100_000_000;
+            });
 
             builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
