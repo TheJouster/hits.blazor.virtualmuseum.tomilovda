@@ -19,9 +19,9 @@
 @code {
     private List<VirtualMuseum.Models.Exhibit> exhibits = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        exhibits = ExhibitService.GetAll();
+        exhibits = await ExhibitService.GetAllAsync();
     }
     void CreateExhibit()
     {

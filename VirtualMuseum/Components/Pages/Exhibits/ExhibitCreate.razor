@@ -50,7 +50,7 @@
             return;
 
 
-        allExhibits = ExhibitService.GetAll();
+        allExhibits = await ExhibitService.GetAllAsync();
         exhibit = new VirtualMuseum.Models.Exhibit
         {
             Id = allExhibits.Count,
@@ -70,11 +70,17 @@
 
         if (!user.Identity!.IsAuthenticated)
             return;
+        exhibit?.Id = allExhibits.Count;
+        exhibit?.Title = exhibitName;
+        exhibit?.Description = exhibitDesc;
 
-        exhibit.Title = exhibitName;
-        exhibit.Description = exhibitDesc;
-
-        ExhibitService.AddExhibit(exhibit);
+        await ExhibitService.AddExhibitAsync(new VirtualMuseum.Models.Exhibit
+        {
+            Id = allExhibits.Count,
+            Title = exhibitName,
+            Description = exhibitDesc,
+            Images = exhibit.Images
+        });
         ResetFileInput();
         Navigation.NavigateTo("/exhibits");
     }
@@ -86,7 +92,7 @@
 
     async Task UploadImages(InputFileChangeEventArgs e)
     {
-        var exhibitFolder = Path.Combine(Env.WebRootPath, "images", "exhibits", exhibit.Id.ToString());
+        var exhibitFolder = Path.Combine(Env.WebRootPath, "images", "exhibits", exhibit?.Id.ToString());
         Directory.CreateDirectory(exhibitFolder);
 
         foreach (var file in e.GetMultipleFiles())

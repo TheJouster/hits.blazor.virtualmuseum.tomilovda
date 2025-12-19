@@ -59,6 +59,8 @@
 
         if (!user.Identity!.IsAuthenticated)
             return;
+        tours = await TourService.GetAllAsync();
+        allExhibits = await ExhibitService.GetAllAsync();
 
         var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value;
         tour = new VirtualMuseum.Models.Tour
@@ -69,8 +71,8 @@
             Date = DateTime.Now,
             Description = tourDesc
         };
-        allExhibits = ExhibitService.GetAll();
-        tours = TourService.GetTours();
+        
+       
 
     }
 
@@ -93,10 +95,18 @@
 
         var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value;
 
-        tour.Name = tourName;
-        tour.Description = tourDesc;
+        tour?.Name = tourName;
+        tour?.Description = tourDesc;
 
-        TourService.AddTour(tour);
+        await TourService.AddTourAsync(new VirtualMuseum.Models.Tour
+        {
+            Id = tours.Count,
+            Name = tourName,
+            OwnerId = userId,
+            Date = DateTime.Now,
+            Description = tourDesc,
+            Exhibits = tour.Exhibits
+        });
         Navigation.NavigateTo("/tours");
     }
 }

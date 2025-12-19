@@ -1,21 +1,30 @@
 ﻿namespace VirtualMuseum.Services
 {
+    using Microsoft.EntityFrameworkCore;
+    using VirtualMuseum.Components.Pages.Exhibits;
+    using VirtualMuseum.Data;
     using VirtualMuseum.Models;
     public class FeedbackService
     {
-        private readonly List<Feedback> _feedbacks = new();
-        public void AddFeedback(Feedback feedback)
+        private readonly ApplicationDbContext _db;
+
+        public FeedbackService(ApplicationDbContext db)
         {
-            _feedbacks.Add(feedback);
+            _db = db;
         }
-        public List<Feedback> GetAll() => _feedbacks;
-        
-        public List<Feedback> GetByTour(int tourId)
+
+        public async Task<List<Feedback>> GetByTourAsync(int tourId)
         {
-            return _feedbacks
+            return await _db.Feedbacks
                 .Where(f => f.TourId == tourId)
-                .OrderByDescending(f => f.CreatedAt)
-                .ToList();
+                .OrderByDescending(f => f.CreatedAt).ToListAsync();
+        }
+
+        public async Task AddAsync(Feedback feedback)
+        {
+            feedback.Id = 0;
+            _db.Feedbacks.Add(feedback);
+            await _db.SaveChangesAsync();
         }
     }
 }

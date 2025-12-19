@@ -44,9 +44,10 @@ namespace VirtualMuseum
                 .AddSignInManager()
                 .AddDefaultTokenProviders();
 
-            builder.Services.AddSingleton<TourService>();
-            builder.Services.AddSingleton<FeedbackService>();
-            builder.Services.AddSingleton<ExhibitService>();
+            builder.Services.AddScoped<TourService>();
+            builder.Services.AddScoped<FeedbackService>();
+            builder.Services.AddScoped<ExhibitService>();
+            builder.Services.AddScoped<AdminService>();
 
             builder.Services.Configure<FormOptions>(options =>
             {

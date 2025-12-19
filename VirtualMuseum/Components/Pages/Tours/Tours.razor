@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @inject VirtualMuseum.Services.TourService TourService
 @inject NavigationManager Navigation
+@inject VirtualMuseum.Services.AdminService AdminService
 @rendermode InteractiveServer
 
 <PageTitle>Туры</PageTitle>
@@ -15,26 +16,50 @@
 </AuthorizeView>
 <div class="mb-3">
     <div class="row m-3">
-        @foreach(var tour in tours)
+        @if (tours.Count == 0)
         {
-            <div class="card m-3" style="width: 18rem; height: 400px;">
-                <img src="@tour.Exhibits[0]?.Images[0]?.ImageUrl" class="card-img-top" style="height: 200px;" alt="...">
-                <div class="card-body">
-                    <h5 class="card-title">@tour.Name</h5>
-                    <p class="card-text">(@tour.Date.ToShortDateString()) <br />@tour.Description</p>
-                    <a href="/tours/@tour.Id" class="btn btn-primary">Просмотреть</a>
+            <h4>Туров пока нет...</h4>
+        }else{
+            @foreach(var tour in tours)
+            {
+                @if (tour == null)
+                {
+                    <p>Загрузка тура...</p>
+                }
+                else
+                {
+                <div class="card m-3" style="width: 18rem; height: 400px;">
+                    @if (tour.Exhibits.Any() && tour.Exhibits.First().Images.Any())
+                    {
+                        <img src="@tour.Exhibits[0]?.Images[0]?.ImageUrl" class="card-img-top" style="height: 200px;" alt="...">
+                    }
+                    <div class="card-body">
+                        <h5 class="card-title">@tour.Name</h5>
+                        <p class="card-text">(@tour.Date.ToShortDateString()) <br />@tour.Description</p>
+                        <a href="/tours/@tour.Id" class="btn btn-primary">Просмотреть</a>
+                    </div>
                 </div>
-            </div>
+                }
+            }
         }
     </div>
 </div>
+<button class="btn btn-danger"
+        @onclick="ClearDb">
+    Очистить базу
+</button>
 
 @code {
+    async Task ClearDb()
+    {
+        await AdminService.ClearDatabaseAsync();
+    }
     private List<VirtualMuseum.Models.Tour> tours = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        tours = TourService.GetTours();
+        tours = await TourService.GetAllAsync();
+        StateHasChanged();
     }
     void CreateTour()
     {

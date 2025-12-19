@@ -9,8 +9,10 @@ namespace VirtualMuseum.Models
 
         public string Description { get; set; } = string.Empty;
         public DateTime Date { get; set; }
-        public string OwnerId { get; set; }
+        public string OwnerId { get; set; } = string.Empty;
         public List<Exhibit> Exhibits { get; set; } = new();
+
+        public List<Feedback> Feedbacks { get; set; } = new();
 
     }
 }
